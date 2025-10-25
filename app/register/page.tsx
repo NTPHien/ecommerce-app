@@ -17,7 +17,10 @@ export default function RegisterPage() {
       setEmail("");
     setPassword("");
     } catch (error) {
-      setMessage(error.message || "Đăng ký thất bại.");
+        if (error instanceof Error)
+            setMessage(error.message);
+        else
+            setMessage("Đăng ký thất bại.");
     }
   }
 
