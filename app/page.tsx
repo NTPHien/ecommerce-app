@@ -1,29 +1,29 @@
 'use client';
-import { useEffect, useState } from "react";
-import { supabase } from "../lib/supabaseClient.js"; 
+// import { useEffect, useState } from "react";
+// import { supabase } from "../lib/supabaseClient.js"; 
 
 export default function Home() {
-  const [products, setProducts] = useState([]);
+  // const [products, setProducts] = useState([]);
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      const { data, error } = await supabase
-        .from('products')
-        .select('*');
+  // useEffect(() => {
+  //   const fetchProducts = async () => {
+  //     const { data, error } = await supabase
+  //       .from('products')
+  //       .select('*');
 
-      if (error) {
-        console.error('Error fetching products:', error);
-      } else {
-        setProducts(data);
-      }
-    };
+  //     if (error) {
+  //       console.error('Error fetching products:', error);
+  //     } else {
+  //       setProducts(data);
+  //     }
+  //   };
 
-    fetchProducts();
-  }, []);
+  //   fetchProducts();
+  // }, []);
   return (
     <div>
       <h1>Danh sách sản phẩm</h1>
-      <ul>
+      {/* <ul>
         {products.map((product) => (
           <li key={product.id}>
             <img src={product.image_url} alt={product.name} width={100} />
@@ -31,7 +31,7 @@ export default function Home() {
             <div>{product.price} VND</div>
           </li>
         ))}
-      </ul>
+      </ul> */}
     </div>
   );
 }
