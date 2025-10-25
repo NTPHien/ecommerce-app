@@ -21,6 +21,7 @@ import { useProductStore } from '../store/products';
 import { useAuthStore } from '../store/auth';
 import Navigation from '../components/Navigation';
 import type { Product } from '../types';
+import { supabase } from '@/lib/supabaseClient';
 
 export default function ProductsPage() {
   const { user, isAuthenticated } = useAuthStore();
@@ -33,6 +34,7 @@ export default function ProductsPage() {
     price: '',
     image: ''
   });
+  const [file, setFile] = useState<File | null>(null); // thêm state cho file
 
   const handleOpen = () => {
     setFormData({
@@ -41,6 +43,7 @@ export default function ProductsPage() {
       price: '',
       image: ''
     });
+    setFile(null);
     setEditingProduct(null);
     setOpen(true);
   };
@@ -57,11 +60,12 @@ export default function ProductsPage() {
       price: product.price.toString(),
       image: product.image || ''
     });
+    setFile(null);
     setEditingProduct(product);
     setOpen(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const productData = {
       ...formData,
@@ -69,16 +73,46 @@ export default function ProductsPage() {
       id: editingProduct?.id || Date.now()
     };
 
+    if (file) {
+      const fileName = `${Date.now()}-image-${file.name.split('.').pop()}`;
+      const { data, error } = await supabase
+        .storage
+        .from('commerce-app')
+        .upload(fileName, file);
+      if (error) {
+        alert('Upload image failed: ' + error.message);
+        setFile(null);
+        return;
+      }
+
+      const { data: publicUrlData } = supabase.storage
+        .from('commerce-app')
+        .getPublicUrl(fileName);
+
+      productData.image = publicUrlData.publicUrl;
+    }
+
     if (editingProduct) {
+      await supabase
+        .from('products')
+        .update(productData)
+        .eq('id', editingProduct.id);
       updateProduct(editingProduct.id, productData as Product);
     } else {
+      await supabase
+        .from('products')
+        .insert([productData]);
       addProduct(productData as Product);
     }
     handleClose();
   };
 
-  const handleDeleteProduct = (id: number) => {
+  const handleDeleteProduct = async (id: number) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
+      await supabase
+        .from('products')
+        .delete()
+        .eq('id', id);
       deleteProduct(id);
     }
   };
@@ -173,13 +207,25 @@ export default function ProductsPage() {
                 value={formData.price}
                 onChange={(e) => setFormData({ ...formData, price: e.target.value })}
               />
-              <TextField
-                margin="dense"
-                label="Image URL"
-                fullWidth
-                value={formData.image}
-                onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-              />
+              <Box sx={{ mt: 2 }}>
+                <Typography variant="subtitle1">Product Image</Typography>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setFile(e.target.files?.[0] || null)}
+                  style={{ marginTop: '8px' }}
+                />
+                {formData.image && !file && (
+                  <Box sx={{ mt: 1 }}>
+                    <Typography variant="body2">Current Image:</Typography>
+                    <img
+                      src={formData.image}
+                      alt="current"
+                      style={{ width: '100px', borderRadius: '4px', marginTop: '4px' }}
+                    />
+                  </Box>
+                )}
+              </Box>
             </DialogContent>
             <DialogActions>
               <Button onClick={handleClose}>Cancel</Button>

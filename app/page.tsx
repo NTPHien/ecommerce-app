@@ -7,31 +7,7 @@ import Navigation from './components/Navigation';
 import { useProductStore } from './store/products';
 import { useCartStore } from './store/cart';
 import type { Product } from './types';
-
-// Sample data
-const sampleProducts = [
-  {
-    id: 1,
-    name: 'T-Shirt',
-    description: 'A comfortable cotton t-shirt',
-    price: 19.99,
-    image: 'https://via.placeholder.com/200'
-  },
-  {
-    id: 2,
-    name: 'Jeans',
-    description: 'Classic blue jeans',
-    price: 49.99,
-    image: 'https://via.placeholder.com/200'
-  },
-  {
-    id: 3,
-    name: 'Sneakers',
-    description: 'Comfortable running shoes',
-    price: 79.99,
-    image: 'https://via.placeholder.com/200'
-  }
-] as Product[];
+import { supabase } from '../lib/supabaseClient';
 
 export default function Home() {
   const router = useRouter();
@@ -39,14 +15,24 @@ export default function Home() {
   const addItem = useCartStore((state) => state.addItem);
 
   useEffect(() => {
-    setProducts(sampleProducts);
-  }, [setProducts]);
+    async function fetchProducts() {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*');
+      
+      if (!error) {
+        setProducts(data as Product[]);
+      }
+    }
+    fetchProducts();
+  }, []);
 
   const handleAddToCart = (product: Product) => {
     addItem({
       ...product,
       quantity: 1
     });
+    router.push('/checkout');
   };
 
   return (
